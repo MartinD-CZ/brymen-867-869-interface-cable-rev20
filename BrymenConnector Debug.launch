@@ -68,6 +68,6 @@
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
         <listEntry value="4"/>
     </listAttribute>
-    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;/&gt;&#13;&#10;"/>
+    <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#13;&#10;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;134742016&quot; label=&quot;EEPROM_START&quot;/&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;536872872&quot; label=&quot;0x200007a8&quot;/&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;536872936&quot; label=&quot;&amp;amp;(test)&quot;/&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;536872904&quot; label=&quot;&amp;amp;(readback)&quot;/&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;536872904&quot; label=&quot;data&quot;/&gt;&#13;&#10;    &lt;gdbmemoryBlockExpression address=&quot;536872904&quot; label=&quot;data_ptr&quot;/&gt;&#13;&#10;&lt;/memoryBlockExpressionList&gt;&#13;&#10;"/>
     <stringAttribute key="process_factory_id" value="org.eclipse.cdt.dsf.gdb.GdbProcessFactory"/>
 </launchConfiguration>
