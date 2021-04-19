@@ -2,6 +2,7 @@
 #include "libGPIO.h"
 #include "libUART.h"
 #include "libNVM.h"
+#include "libTIM.h"
 
 #include "version.h"
 
@@ -10,6 +11,8 @@ gpio led_ir{GPIOA, 1};
 gpio phototransistor{GPIOA, 0};
 
 uart_irq com{USART2};
+
+timer_basic timer_us{TIM2};			//timer for microsend delay generation
 
 char com_txBuffer[128];
 char com_rxBuffer[4];
@@ -29,6 +32,9 @@ int main(void)
 	com.enableRX(gpio{GPIOA, 10, gpio::af::_4}, com_rxBuffer, sizeof(com_rxBuffer));
 	NVIC_EnableIRQ(USART2_IRQn);
 	//com.enableTX(gpio{GPIOA, 9, gpio::af::_4}, DMA1_Channel4, dmaPriority::medium, com_buffer, sizeof(com_buffer));
+
+	timer_us.init(16, 0xFFFF);
+	timer_us.start();
 
 	//print initial info on the serial port
 	com.print("\n\nBrymen 867/869 interface cable\nfor more info, see embedblog.eu/?p=475\n\n");		//TODO:web
