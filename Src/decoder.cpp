@@ -1,6 +1,9 @@
 #include "libCORE.h"
 #include "libUART.h"
 #include "libTIM.h"
+
+#include "stdlib.h"
+
 #include "decoder.h"
 
 extern uart_irq com;
@@ -24,12 +27,15 @@ uint8_t receiveByte(void)
 	for (uint8_t i = 0; i < 8; i ++)
 	{
 		led_ir = LOW;
-		//_delay_us(CLOCK_DELAY_US);
+		delay_us(CLOCK_DELAY_US);
 		led_ir = HIGH;
 
-		if (phototransistor == HIGH) temp |= (1 << i);
+		/*if (phototransistor == HIGH) temp |= (1 << i);
+		delay_us(CLOCK_DELAY_US);*/
 
-		//_delay_us(CLOCK_DELAY_US);
+		delay_us(CLOCK_DELAY_US / 2);
+		if (phototransistor == HIGH) temp |= (1 << i);
+		delay_us(CLOCK_DELAY_US / 2);
 	}
 
 	return temp;
@@ -52,19 +58,21 @@ bool receiveMessage(void)
 	return 1;
 }
 
-void processData(void)
+void processMessage(void)
 {
 	/*if (rawData)
 	{
-		uart_sendString_P(PSTR("RAW DATA: "));
+		com.print"RAW DATA: ");
 
 		for (uint8_t i = 0; i < 20; i++)
 		{
-			uart_sendNumber(data[i], 16);
-			uart_sendChar(' ');
+			char buffer[8];
+			itoa(g_data[i], buffer, 16);
+			com.print(buffer);
+			com.printChar(' ');
 		}
 
-		uart_sendChar('\n');
+		com.printChar('\n');
 		return;
 	}*/
 

@@ -5,6 +5,7 @@
 #include "libTIM.h"
 
 #include "version.h"
+#include "decoder.h"
 
 gpio led_red{GPIOA, 7};
 gpio led_ir{GPIOA, 1};
@@ -57,9 +58,16 @@ int main(void)
 
 	while (1)
 	{
-		tick::delay(500);
+		/*tick::delay(500);
 		led_red.toggle();
-		com.print("tick\n");
+		com.print("tick\n");*/
+
+		if (receiveMessage())
+		{
+			led_red = LOW;
+			processMessage();
+			led_red = HIGH;
+		}
 	}
 }
 
