@@ -1,7 +1,7 @@
 #ifndef DECODER_H_
 #define DECODER_H_
 
-enum class mode_t
+enum class mode_t: uint8_t
 {
 	sendRate1Hz,
 	sendRate5Hz,

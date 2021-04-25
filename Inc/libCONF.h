@@ -5,4 +5,6 @@
 
 #define CLOCK_DELAY_US			100
 
+#define EEPROM_VALID_FLAG		0xC4
+
 #endif /* LIBCONF_H_ */

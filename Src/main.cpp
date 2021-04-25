@@ -21,7 +21,7 @@ volatile bool rawDataEnabled;
 char com_txBuffer[128];
 char com_rxBuffer[4];
 
-void comReceivedCB(void);
+void comIdleLineCB(void);
 
 int main(void)
 {
@@ -36,30 +36,33 @@ int main(void)
 	com.init(115200);
 	com.enableTX(gpio{GPIOA, 9, gpio::af::_4}, com_txBuffer, sizeof(com_txBuffer));
 	com.enableRX(gpio{GPIOA, 10, gpio::af::_4}, com_rxBuffer, sizeof(com_rxBuffer));
-	com.enableRxReceivedNum(1, comReceivedCB);
+	com.enableIdleLine(comIdleLineCB);
 	NVIC_EnableIRQ(USART2_IRQn);
 
 	timer_us.init(16, 0xFFFF);
 	timer_us.start();
 
+	libASSERT(false);
+
 	//print initial info on the serial port
 	com.print("\n\nBrymen 867/869 interface cable\nfor more info, see embedblog.eu/?p=475\n\n");		//TODO:web
 	com.printf("Firmware revision: %s\n", _V_BUILD_TAG);
 	com.print("Available commands:\n");
-	com.print("F - 5 samples per second\n");
-	com.print("O - 1 sample per second\n");
-	com.print("S - stop autosend\n");
-	com.print("D - send a single reading\n");
-	com.print("R - toggle raw data output\n");
+	com.print("F - Five samples per second\n");
+	com.print("O - One sample per second\n");
+	com.print("S - Stop autosend\n");
+	com.print("D - read single Data\n");
+	com.print("R - toggle Raw data output\n");
+	com.print("E - save current settings to Eeprom\n");
 
-	/*eeprom::enableClock();
-	uint64_t test = 0xDEADBEEFABCDEFC4;
-	eeprom::write<uint64_t>(0, test);
-
-	uint64_t readback;
-	eeprom::read<uint64_t>(0, &readback);
-
-	com.printf("Data readback: 0x%x\n", readback);*/
+	eeprom::enableClock();
+	uint8_t data[2];
+	eeprom::read(0, data, sizeof(data));
+	if (data[0] == EEPROM_VALID_FLAG)
+	{
+		mode = (mode_t)data[1];
+		com.print("Valid settings loaded from eeprom\n");
+	}
 
 	while (1)
 	{
@@ -67,6 +70,7 @@ int main(void)
 		{
 			led_red = LOW;
 			processMessage();
+			tick::delay(50);
 			led_red = HIGH;
 
 			if (mode == mode_t::sendRate1Hz) tick::delay(920);
@@ -80,7 +84,7 @@ int main(void)
 	}
 }
 
-void comReceivedCB(void)
+void comIdleLineCB(void)
 {
 	switch(com_rxBuffer[0])
 	{
@@ -89,7 +93,10 @@ void comReceivedCB(void)
 		case 'S': mode = mode_t::stop; break;
 		case 'D': mode = mode_t::sendSingleSample; break;
 		case 'R': rawDataEnabled = !rawDataEnabled; break;
-		default: libASSERT(false);
+		case 'E':
+			uint8_t data[2] = {EEPROM_VALID_FLAG, (uint8_t)mode};
+			eeprom::write(0, data, sizeof(data));
+			break;
 	}
 
 	com.rxReset();
@@ -100,7 +107,7 @@ extern "C" void USART2_IRQHandler(void)
 	com.IRQHandler();
 }
 
-void __custom__assert(const char* file, uint32_t line)
+void custom_assert(const char* file, uint32_t line)
 {
 	com.printf("ERROR! Assert failed: file %s, line %d", file, line);
 	while (com.txCharsRemaining());

@@ -12,7 +12,8 @@ extern gpio phototransistor;
 
 extern timer_basic timer_us;
 
-uint8_t g_data[20];
+uint8_t data[20];
+extern volatile bool rawDataEnabled;
 
 void delay_us(uint16_t us)
 {
@@ -53,144 +54,146 @@ bool receiveMessage(void)
 		if (tick::get() - start > 500) return false;
 	}
 
-	for (uint8_t i = 0; i < 20; i ++) g_data[i] = receiveByte();
+	for (uint8_t i = 0; i < 20; i ++) data[i] = receiveByte();
 
 	return 1;
 }
 
 void processMessage(void)
 {
-	/*if (rawData)
+	if (rawDataEnabled)
 	{
-		com.print"RAW DATA: ");
+		com.print("RAW DATA: ");
 
 		for (uint8_t i = 0; i < 20; i++)
 		{
 			char buffer[8];
-			itoa(g_data[i], buffer, 16);
+			itoa(data[i], buffer, 16);
 			com.print(buffer);
-			com.printChar(' ');
+			com.print(" ");
 		}
 
-		com.printChar('\n');
+		com.print("\n");
 		return;
-	}*/
+	}
 
 	//decode the output
-	if (g_data[0] & 0x01)
+	if (data[0] & 0x01)
 		com.print("AUTO ");
-	if ((g_data[0] >> 7) & 0x01)
+	if ((data[0] >> 7) & 0x01)
 		com.print("AVG ");
-	if ((g_data[0] >> 6) & 0x01)
+	if ((data[0] >> 6) & 0x01)
 		com.print("MIN ");
-	if ((g_data[0] >> 5) & 0x01)
+	if ((data[0] >> 5) & 0x01)
 		com.print("MAX ");
-	if ((g_data[0] >> 2) & 0x01)
+	if ((data[0] >> 2) & 0x01)
 		com.print("CREST ");
-	if ((g_data[0] >> 1) & 0x01)
+	if ((data[0] >> 1) & 0x01)
 		com.print("REC ");
-	if ((g_data[0] >> 3) & 0x01)
+	if ((data[0] >> 3) & 0x01)
 		com.print("HOLD ");
-	if (g_data[2] & 0x01)
+	if (data[2] & 0x01)
 		com.print("DELTA ");
-	if (g_data[9] & 0x01)
+	if (data[9] & 0x01)
 		com.print("BEEP ");
 
 	//DECODE MAIN DISPLAY
 	com.print("MAIN: ");
 
-	if ((g_data[1] >> 7) & 0x01)
-		com.printChar('-');
+	if ((data[1] >> 7) & 0x01)
+		com.print("-");
 
 	for (uint8_t i = 0; i < 6; i++)
 	{
-		com.printChar(48 + decodeDigit(g_data[2 + i]));
-		if ((g_data[3 + i] & 0x01) & (i < 4))
-			com.printChar('.');
+		char temp[] = {(char)(48 + decodeDigit(data[2 + i])), '\0'};
+		com.print(temp);
+		if ((data[3 + i] & 0x01) & (i < 4))
+			com.print(".");
 	}
-	com.printChar(' ');
+	com.print(" ");
 
 	//DECODE UNIT PREFIX FOR MAIN DISPLAY
-	if ((g_data[13] >> 6) & 0x01)
-		com.printChar('n');
-	if ((g_data[14] >> 3) & 0x01)
-		com.printChar('u');
-	if ((g_data[14] >> 2) & 0x01)
-		com.printChar('m');
-	if ((g_data[14] >> 6) & 0x01)
-		com.printChar('k');
-	if ((g_data[14] >> 5) & 0x01)
-		com.printChar('M');
+	if ((data[13] >> 6) & 0x01)
+		com.print("n");
+	if ((data[14] >> 3) & 0x01)
+		com.print("u");
+	if ((data[14] >> 2) & 0x01)
+		com.print("m");
+	if ((data[14] >> 6) & 0x01)
+		com.print("k");
+	if ((data[14] >> 5) & 0x01)
+		com.print("M");
 
 	//DECODE UNIT FOR MAIN DISPLAY
-	if (g_data[7] & 0x01)
-		com.printChar('V');
-	if ((g_data[13] >> 7) & 0x01)
-		com.printChar('A');
-	if ((g_data[13] >> 5) & 0x01)
-		com.printChar('F');
-	if ((g_data[13] >> 4) & 0x01)
-		com.printChar('S');
-	if ((g_data[14] >> 7) & 0x01)
+	if (data[7] & 0x01)
+		com.print("V");
+	if ((data[13] >> 7) & 0x01)
+		com.print("A");
+	if ((data[13] >> 5) & 0x01)
+		com.print("F");
+	if ((data[13] >> 4) & 0x01)
+		com.print("S");
+	if ((data[14] >> 7) & 0x01)
 		com.print("D%");
-	if ((g_data[14] >> 4) & 0x01)
+	if ((data[14] >> 4) & 0x01)
 		com.print("Ohm");
-	if ((g_data[14] >> 1) & 0x01)
+	if ((data[14] >> 1) & 0x01)
 		com.print("dB");
-	if (g_data[14] & 0x01)
+	if (data[14] & 0x01)
 		com.print("Hz");
-	com.printChar(' ');
+	com.print(" ");
 
 	//DC OR AC
-	if ((g_data[0] >> 4) & 0x01)
+	if ((data[0] >> 4) & 0x01)
 		com.print("DC ");
-	if (g_data[1] & 0x01)
+	if (data[1] & 0x01)
 		com.print("AC ");
 
 	//DECODE AUXILIARY DISPLAY
 	com.print("AUX: ");
 
-	if ((g_data[8] >> 4) & 0x01)
-		com.printChar('-');
+	if ((data[8] >> 4) & 0x01)
+		com.print("-");
 
 	for (uint8_t i = 0; i < 4; i++)
 	{
-		com.printChar(48 + decodeDigit(g_data[9 + i]));
-		if ((g_data[10 + i] & 0x01) & (i < 3))
-			com.printChar('.');
+		char temp[] = {(char)(48 + decodeDigit(data[9 + i])), '\0'};
+		com.print(temp);
+		if ((data[10 + i] & 0x01) & (i < 3))
+			com.print(".");
 	}
 
-	com.printChar(' ');
+	com.print(" ");
 
 	//DECODE UNIT PREFIX FOR AUXILIARY DISPLAY
-	if ((g_data[8] >> 1) & 0x01)
-		com.printChar('m');
-	if (g_data[8] & 0x01)
-		com.printChar('u');
-	if ((g_data[13] >> 1) & 0x01)
-		com.printChar('k');
-	if (g_data[13] & 0x01)
-		com.printChar('M');
+	if ((data[8] >> 1) & 0x01)
+		com.print("m");
+	if (data[8] & 0x01)
+		com.print("u");
+	if ((data[13] >> 1) & 0x01)
+		com.print("k");
+	if (data[13] & 0x01)
+		com.print("M");
 
 	//DECODE UNIT FOR AUXILIARY DISPLAY
-	if ((g_data[13] >> 2) & 0x01)
+	if ((data[13] >> 2) & 0x01)
 		com.print("Hz");
-	if ((g_data[13] >> 3) & 0x01)
-		com.printChar('V');
-	if ((g_data[8] >> 2) & 0x01)
-		com.printChar('A');
-	if ((g_data[8] >> 3) & 0x01)
+	if ((data[13] >> 3) & 0x01)
+		com.print("V");
+	if ((data[8] >> 2) & 0x01)
+		com.print("A");
+	if ((data[8] >> 3) & 0x01)
 		com.print("%4-20mA");
 
-	com.printChar(' ');
-	if ((g_data[13] >> 2) & 0x01)
+	com.print(" ");
+	if ((data[13] >> 2) & 0x01)
 		com.print("AC");
 
 	//FINISH
-	com.printChar('\n');
+	com.print("\n");
 
 	//detect low battery
-	if ((g_data[8] >> 7) & 0x01)
+	if ((data[8] >> 7) & 0x01)
 		com.print(" LOW BAT\n");
 }
 
