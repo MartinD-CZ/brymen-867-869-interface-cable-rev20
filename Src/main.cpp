@@ -15,8 +15,13 @@ uart_irq com{USART2};
 
 timer_basic timer_us{TIM2};			//timer for microsend delay generation
 
+volatile mode_t mode;
+volatile bool rawDataEnabled;
+
 char com_txBuffer[128];
 char com_rxBuffer[4];
+
+void comReceivedCB(void);
 
 int main(void)
 {
@@ -31,8 +36,8 @@ int main(void)
 	com.init(115200);
 	com.enableTX(gpio{GPIOA, 9, gpio::af::_4}, com_txBuffer, sizeof(com_txBuffer));
 	com.enableRX(gpio{GPIOA, 10, gpio::af::_4}, com_rxBuffer, sizeof(com_rxBuffer));
+	com.enableRxReceivedNum(1, comReceivedCB);
 	NVIC_EnableIRQ(USART2_IRQn);
-	//com.enableTX(gpio{GPIOA, 9, gpio::af::_4}, DMA1_Channel4, dmaPriority::medium, com_buffer, sizeof(com_buffer));
 
 	timer_us.init(16, 0xFFFF);
 	timer_us.start();
@@ -58,17 +63,36 @@ int main(void)
 
 	while (1)
 	{
-		/*tick::delay(500);
-		led_red.toggle();
-		com.print("tick\n");*/
-
 		if (receiveMessage())
 		{
 			led_red = LOW;
 			processMessage();
 			led_red = HIGH;
+
+			if (mode == mode_t::sendRate1Hz) tick::delay(920);
+			else if (mode == mode_t::sendRate5Hz) continue;
+			else
+			{
+				mode = mode_t::stop;
+				while (mode == mode_t::stop);
+			}
 		}
 	}
+}
+
+void comReceivedCB(void)
+{
+	switch(com_rxBuffer[0])
+	{
+		case 'F': mode = mode_t::sendRate5Hz; break;
+		case 'O': mode = mode_t::sendRate1Hz; break;
+		case 'S': mode = mode_t::stop; break;
+		case 'D': mode = mode_t::sendSingleSample; break;
+		case 'R': rawDataEnabled = !rawDataEnabled; break;
+		default: libASSERT(false);
+	}
+
+	com.rxReset();
 }
 
 extern "C" void USART2_IRQHandler(void)
@@ -79,5 +103,8 @@ extern "C" void USART2_IRQHandler(void)
 void __custom__assert(const char* file, uint32_t line)
 {
 	com.printf("ERROR! Assert failed: file %s, line %d", file, line);
+	while (com.txCharsRemaining());
+	#ifdef DEBUG
 	__asm("bkpt 0");
+	#endif
 }
