@@ -45,7 +45,7 @@ int main(void)
 	timer_us.start();
 
 	//print initial info on the serial port
-	com.print("\n\nBrymen 867/869 interface cable\nfor more info, see embedblog.eu/?p=475\n\n");		//TODO:web
+	com.print("\n\nBrymen 867/869 interface cable\nfor more info, see http://embedblog.eu/?p=819\n\n");
 	com.printf("Firmware revision: %s\n", _V_BUILD_TAG);
 	com.print("Available commands:\n");
 	com.print("F - Five samples per second\n");

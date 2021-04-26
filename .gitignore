@@ -5,3 +5,4 @@
 #un-ignore bin and elf files
 !*.bin
 !*.elf
+/Release/
