@@ -1,2 +1,7 @@
-/Debug/
+/Debug/*
+/Release/*
 /Inc/version.h
+
+#un-ignore bin and elf files
+!*.bin
+!*.elf

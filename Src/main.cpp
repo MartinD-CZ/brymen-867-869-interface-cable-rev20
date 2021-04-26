@@ -23,6 +23,8 @@ char com_rxBuffer[4];
 
 void comIdleLineCB(void);
 
+//TODO: set baud rate
+
 int main(void)
 {
 	rcc::initHSI();
@@ -42,8 +44,6 @@ int main(void)
 	timer_us.init(16, 0xFFFF);
 	timer_us.start();
 
-	libASSERT(false);
-
 	//print initial info on the serial port
 	com.print("\n\nBrymen 867/869 interface cable\nfor more info, see embedblog.eu/?p=475\n\n");		//TODO:web
 	com.printf("Firmware revision: %s\n", _V_BUILD_TAG);
@@ -60,8 +60,16 @@ int main(void)
 	eeprom::read(0, data, sizeof(data));
 	if (data[0] == EEPROM_VALID_FLAG)
 	{
-		mode = (mode_t)data[1];
+		rawDataEnabled = data[1] >> 7;
+		mode = (mode_t)(data[1] & 0b111);
 		com.print("Valid settings loaded from eeprom\n");
+	}
+
+	//startup blink
+	for (uint8_t i = 0; i < 6; i++)
+	{
+		led_red.toggle();
+		tick::delay(250);
 	}
 
 	while (1)
@@ -94,7 +102,7 @@ void comIdleLineCB(void)
 		case 'D': mode = mode_t::sendSingleSample; break;
 		case 'R': rawDataEnabled = !rawDataEnabled; break;
 		case 'E':
-			uint8_t data[2] = {EEPROM_VALID_FLAG, (uint8_t)mode};
+			uint8_t data[2] = {EEPROM_VALID_FLAG, (uint8_t)((uint8_t)mode | ((uint8_t)rawDataEnabled << 7))};
 			eeprom::write(0, data, sizeof(data));
 			break;
 	}
